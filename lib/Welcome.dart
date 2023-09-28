@@ -75,7 +75,7 @@ class FirstPage extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => Home()),
+                          MaterialPageRoute(builder: (context) => HomePage()),
                         ); // Add the closing parenthesis here
                       },
                       child: Text(

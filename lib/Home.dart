@@ -4,13 +4,14 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class Home extends StatefulWidget {
+class HomePage extends StatefulWidget {
   @override
-  State<Home> createState() => _HomeState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _HomeState extends State<Home> {
-  var temp;
+class _HomePageState extends State<HomePage> {
+  double tempCelsius = 0.0; // Initialize with a default value
+  double tempFahrenheit = 0.0;// Temperature in Fahrenheit
   var description;
   var currently;
   var humidity;
@@ -19,9 +20,9 @@ class _HomeState extends State<Home> {
 
   // Define a mapping between weather conditions and image asset paths
   Map<String, String> weatherConditionToIcon = {
-    'Clear': 'assets/clear.png',
+    'Clear': 'assets/images/clear.png',
     'Clouds': 'assets/images/clouds.png',
-    'Rain': 'assets/rain.png',
+    'Rain': 'assets/images/rain.png',
     // Add more weather conditions and image paths
   };
   Future getWeather() async {
@@ -45,14 +46,25 @@ class _HomeState extends State<Home> {
     var results = jsonDecode(response.body);
     print("Data from API: $results");
 
+    double temperatureKelvin = results['main']['temp'];
+    this.tempCelsius = kelvinToCelsius(temperatureKelvin);
+    this.tempFahrenheit = kelvinToFahrenheit(temperatureKelvin);
+
     setState(() {
-      this.temp = results['main']['temp'];
       this.description = results['weather'][0]['description'];
       this.currently = results['weather'][0]['main'];
       this.humidity = results['main']['humidity'];
       this.windSpeed = results['wind']['speed'];
       this.cityName = results['name'];
     });
+  }
+
+  double kelvinToCelsius(double kelvin) {
+    return kelvin - 273.15;
+  }
+
+  double kelvinToFahrenheit(double kelvin) {
+    return (kelvin - 273.15) * 9/5 + 32;
   }
 
   @override
@@ -66,89 +78,94 @@ class _HomeState extends State<Home> {
     // Get the image asset path based on the current weather condition
     String weatherIconPath = weatherConditionToIcon[currently] ?? '';
     return Scaffold(
-        body: Column(
-      children: [
-        Container(
-          height: MediaQuery.of(context).size.height / 3,
-          width: MediaQuery.of(context).size.width,
-          color: Color.fromARGB(100, 57, 152, 189),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Padding(
-              padding: EdgeInsets.only(bottom: 10),
-              child: Text(
-                cityName != null
-                    ? 'Currently in $cityName' // Use the cityName variable
-                    : "Loading",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold),
-              ),
-            ),
-            Text(temp != null ? temp.toString() + "\u00B0" : "Loading",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold)),
-            Padding(
-                padding: EdgeInsets.only(top: 10),
+      body: Column(
+        children: [
+          Container(
+            height: 400,
+            width: 400,
+            color: Color.fromARGB(255, 238, 227, 209),
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Padding(
+                padding: EdgeInsets.only(bottom: 10),
                 child: Text(
-                  currently != null ? currently.toString() : "Loading",
+                  cityName != null
+                      ? 'Currently in $cityName' // Use the cityName variable
+                      : "Loading",
                   style: TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 30,
                       fontWeight: FontWeight.bold),
-                )),
-            //adds images
-            if (weatherIconPath.isNotEmpty)
-              Image.asset(
-                weatherIconPath,
-                width: 50, // Adjust the size as needed
-                height: 50,
+                ),
               ),
-          ]),
-        ),
-        Expanded(
+              Text(tempCelsius != null
+                  ? '${tempCelsius.toStringAsFixed(2)}°C '
+                  : "Loading",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold)),
+              Padding(
+                  padding: EdgeInsets.only(top: 10),
+                  child: Text(
+                    currently != null ? currently.toString() : "Loading",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold),
+                  )),
+              // adds images
+              if (weatherIconPath.isNotEmpty)
+                Image.asset(
+                  weatherIconPath,
+                  width: 150, // Adjust the size as needed
+                  height: 150,
+                ),
+            ]),
+          ),
+          Expanded(
             child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: ListView(
-                  children: [
-                    ListTile(
-                      leading: FaIcon(FontAwesomeIcons.thermometer),
-                      title: Text(
-                        "Temperature",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      trailing: Text(temp != null
-                          ? temp.toString() + "\u00B0"
-                          : "Loading"),
+              padding: const EdgeInsets.all(20),
+              child: ListView(
+                children: [
+                  ListTile(
+                    leading: FaIcon(FontAwesomeIcons.thermometer),
+                    title: Text(
+                      "Temperature",
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    ListTile(
-                      leading: FaIcon(FontAwesomeIcons.cloud),
-                      title: Text("Weather",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      trailing: Text(description != null
-                          ? description.toString()
-                          : "Loading"),
+                    trailing: Text(tempCelsius != null
+                        ? '${tempCelsius.toStringAsFixed(2)}°C / ${tempFahrenheit.toStringAsFixed(2)}°F'
+                        : "Loading"),
+                  ),
+                  ListTile(
+                    leading: FaIcon(FontAwesomeIcons.cloud),
+                    title: Text("Weather",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    trailing: Text(description != null
+                        ? description.toString()
+                        : "Loading"),
+                  ),
+                  ListTile(
+                    leading: FaIcon(FontAwesomeIcons.sun),
+                    title: Text("Humidity",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    trailing: Text(
+                        humidity != null ? humidity.toString() : "Loading"),
+                  ),
+                  ListTile(
+                    leading: FaIcon(FontAwesomeIcons.wind),
+                    title: Text("Wind Speed",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    trailing: Text(
+                      windSpeed != null ? windSpeed.toString() : "Loading",
                     ),
-                    ListTile(
-                      leading: FaIcon(FontAwesomeIcons.sun),
-                      title: Text("Humidity",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      trailing: Text(
-                          humidity != null ? humidity.toString() : "Loading"),
-                    ),
-                    ListTile(
-                      leading: FaIcon(FontAwesomeIcons.wind),
-                      title: Text("Wind Speed",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      trailing: Text(
-                        windSpeed != null ? windSpeed.toString() : "Loading",
-                      ),
-                    )
-                  ],
-                )))
-      ],
-    ));
+                  )
+                ],
+              ),
+            ),
+          )
+        ],
+      ),
+    );
   }
 }
