@@ -1,24 +1,34 @@
-import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class HomePage extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http ;
+import 'package:google_fonts/google_fonts.dart';
+class HomeP extends StatefulWidget {
+  const HomeP({super.key});
+
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomeP> createState() => _HomePState();
 }
 
-class _HomePageState extends State<HomePage> {
-  double tempCelsius = 0.0; // Initialize with a default value
+class _HomePState extends State<HomeP> {
+ double tempCelsius = 0.0; // Initialize with a default value
   double tempFahrenheit = 0.0;// Temperature in Fahrenheit
-  var description;
-  var currently;
-  var humidity;
-  var windSpeed;
-  var cityName;
-
-  // Define a mapping between weather conditions and image asset paths
+  var description='.';
+  var currently='.';
+  int humidity=0;
+  double windSpeed=0;
+  var cityname='.';
+  double feels_like=0;
+  double feels_likef=0;
+  double temp_max=0;
+  double temp_maxf=0;
+  double temp_min=0;
+  double temp_minf=0;
+  int pressure=0;
+  int visibility=0;
+  var country;
+ // Define a mapping between weather conditions and image asset paths
   Map<String, String> weatherConditionToIcon = {
     'Clear': 'assets/images/clear.png',
     'Clouds': 'assets/images/clouds.png',
@@ -49,13 +59,34 @@ class _HomePageState extends State<HomePage> {
     double temperatureKelvin = results['main']['temp'];
     this.tempCelsius = kelvinToCelsius(temperatureKelvin);
     this.tempFahrenheit = kelvinToFahrenheit(temperatureKelvin);
+  
+  double feelsKelvin = results['main']['feels_like'];
+    this.feels_like = kelvinToCelsius(feelsKelvin);
+    this.feels_likef = kelvinToFahrenheit(feelsKelvin);
+  
+   double HKelvin = results['main']['temp_max'];
+    this.temp_max = kelvinToCelsius(HKelvin);
+    this.temp_maxf= kelvinToFahrenheit(HKelvin);
+
+ double LKelvin = results['main']['temp_min'];
+    this.temp_min = kelvinToCelsius(LKelvin);
+    this.temp_minf= kelvinToFahrenheit(LKelvin);
+
+double speed=results['wind']['speed'];
+this.windSpeed=mstokm(speed);
+
+int visibility=results['visibility'];
+this.visibility=mtokm(visibility);
 
     setState(() {
       this.description = results['weather'][0]['description'];
       this.currently = results['weather'][0]['main'];
       this.humidity = results['main']['humidity'];
-      this.windSpeed = results['wind']['speed'];
-      this.cityName = results['name'];
+    //  this.windSpeed = results['wind']['speed'];
+      this.cityname = results['name'];
+     //this.visibility=results['visibility'];
+     this.pressure = results['main']['pressure'];
+     this.country =results['sys']['country'];
     });
   }
 
@@ -66,106 +97,117 @@ class _HomePageState extends State<HomePage> {
   double kelvinToFahrenheit(double kelvin) {
     return (kelvin - 273.15) * 9/5 + 32;
   }
-
+   double mstokm(double ms){
+    return ms * 3.6;
+   }
+   int mtokm (int m){
+    return m ~/1000;
+   }
   @override
   void initState() {
     super.initState();
     this.getWeather();
   }
 
+
   @override
   Widget build(BuildContext context) {
-    // Get the image asset path based on the current weather condition
-    String weatherIconPath = weatherConditionToIcon[currently] ?? '';
     return Scaffold(
-      body: Column(
-        children: [
-          Container(
-            height: 400,
-            width: 400,
-            color: Color.fromARGB(255, 238, 227, 209),
-            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Padding(
-                padding: EdgeInsets.only(bottom: 10),
-                child: Text(
-                  cityName != null
-                      ? 'Currently in $cityName' // Use the cityName variable
-                      : "Loading",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-              Text(tempCelsius != null
-                  ? '${tempCelsius.toStringAsFixed(2)}°C '
-                  : "Loading",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold)),
-              Padding(
-                  padding: EdgeInsets.only(top: 10),
-                  child: Text(
-                    currently != null ? currently.toString() : "Loading",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold),
-                  )),
-              // adds images
-              if (weatherIconPath.isNotEmpty)
-                Image.asset(
-                  weatherIconPath,
-                  width: 150, // Adjust the size as needed
-                  height: 150,
-                ),
-            ]),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: ListView(
-                children: [
-                  ListTile(
-                    leading: FaIcon(FontAwesomeIcons.thermometer),
-                    title: Text(
-                      "Temperature",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    trailing: Text(tempCelsius != null
-                        ? '${tempCelsius.toStringAsFixed(2)}°C / ${tempFahrenheit.toStringAsFixed(2)}°F'
-                        : "Loading"),
-                  ),
-                  ListTile(
-                    leading: FaIcon(FontAwesomeIcons.cloud),
-                    title: Text("Weather",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    trailing: Text(description != null
-                        ? description.toString()
-                        : "Loading"),
-                  ),
-                  ListTile(
-                    leading: FaIcon(FontAwesomeIcons.sun),
-                    title: Text("Humidity",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    trailing: Text(
-                        humidity != null ? humidity.toString() : "Loading"),
-                  ),
-                  ListTile(
-                    leading: FaIcon(FontAwesomeIcons.wind),
-                    title: Text("Wind Speed",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    trailing: Text(
-                      windSpeed != null ? windSpeed.toString() : "Loading",
-                    ),
-                  )
-                ],
-              ),
-            ),
-          )
-        ],
-      ),
+      backgroundColor:Color.fromARGB(255,118,156,236),
+body:SingleChildScrollView(child: 
+ Stack(children: [
+  Positioned(
+    top: 60,
+    left: 10,
+    child: Icon(Icons.map,size: 25,color: Colors.white,)),
+    Positioned(
+      top: 60,
+      left: 350,
+      child: Icon(Icons.menu,size: 25,color: Colors.white,)),
+      Container(
+margin: EdgeInsets.only(top: 60),
+       child:Center(
+      child: Text('$cityname',style:GoogleFonts.ubuntu(fontSize:25,color:Colors.white,fontWeight: FontWeight.w500))
+         //TextStyle(fontSize:30,color: Colors.white,fontWeight: FontWeight.bold),
+         )
+         ),
+         Container(
+          margin: EdgeInsets.only(top: 150,left:130),
+           
+          child: Image.asset('assets/images/icon2.png')),
+         Container(
+            margin: EdgeInsets.only( top: 300),
+           child:Center(
+            child: Text('$currently',style:GoogleFonts.ubuntu(fontSize: 30,color: Colors.white,fontWeight: FontWeight.bold))
+           )  ),
+            Container(
+              margin: EdgeInsets.only(top: 335),
+             child:Center(
+              child: Text('${tempCelsius.round()}°',style: TextStyle(fontSize: 70,fontWeight: FontWeight.bold,color:Colors.white),))),
+                Container(
+                margin: EdgeInsets.only(top: 420),
+              child:Center( 
+                child: Text('$description',style: TextStyle(fontSize: 20,color: Colors.white),))),
+             Container(
+                  margin: EdgeInsets.only(top:460,left: 20),
+                height: 350,
+                width: 355,
+                decoration: BoxDecoration(
+                  color: Color.fromARGB(158, 46, 81, 157),
+                  borderRadius: BorderRadius.all(Radius.circular(15))
+                )),
+                
+                Positioned(
+                  top:470,
+                  left: 30,
+                child:Text('Feels Like: ${feels_like.round()}°C ',style:TextStyle(color:Colors.white,fontSize: 25,fontWeight: FontWeight.bold))),
+              
+              Positioned(
+                top: 520,
+                left: 30,
+                child: Text('H: ${temp_max.round()}°C',style: TextStyle(fontSize:25 ,color:Colors.white,fontWeight: FontWeight.bold),),),
+                Positioned(
+                  top:520 ,
+                  left: 150,
+                  child: Text('L: ${temp_min.round()}°C',style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold,color:Colors.white),)),
+                 Positioned(
+                  top:570,
+                  left: 30,
+                  child: Text('Wind Speed: ${windSpeed.round()}km/h',style:TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: 25),),),
+              Positioned(
+                top: 620,
+                left: 30,
+                child: Text('Humidity: ${humidity}%',style: TextStyle(color:Colors.white,fontWeight: FontWeight.bold,fontSize: 25),)),
+                Positioned(
+                  top: 670,
+                  left: 30,
+                  child: Text('Pressure: ${pressure}hpa',style: TextStyle(color:Colors.white,fontWeight: FontWeight.bold,fontSize: 25))),
+                    Positioned(
+                  top: 720,
+                  left: 30,
+                  child: Text('Visibility: ${visibility}km/h',style: TextStyle(color:Colors.white,fontWeight: FontWeight.bold,fontSize: 25))),
+                    Positioned(
+                  top: 770,
+                  left: 30,
+                  child: Text('Country: $country',style: TextStyle(color:Colors.white,fontWeight: FontWeight.bold,fontSize: 25))),
+                  
+                  Container(
+                    margin: EdgeInsets.only(top: 830),
+                    
+                    child: Center(child:
+                  Text('Weather data provided by OpenWeatherMap',
+    style: TextStyle(fontSize: 12, color: Colors.white))))
+             // Container(
+              //margin: EdgeInsets.only(top: 650,left:20),
+               // height: 300,
+                //width: 355,
+            //    decoration: BoxDecoration(
+              //    color: Color.fromARGB(158, 46, 81, 157),
+             //     borderRadius: BorderRadius.all(Radius.circular(15))
+         //       ),
+           //   )
+],),)
+
     );
   }
 }

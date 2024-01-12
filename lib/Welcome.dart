@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_learn_1/home.dart';
+//import 'package:flutter_learn_1/home.dart';
+import 'Home.dart';
 
 class FirstPage extends StatelessWidget {
   @override
@@ -73,10 +74,7 @@ class FirstPage extends StatelessWidget {
                     left: 130,
                     child: TextButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => HomePage()),
-                        ); // Add the closing parenthesis here
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => HomeP(),));
                       },
                       child: Text(
                         'Get Started',
